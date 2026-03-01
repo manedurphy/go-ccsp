@@ -1,7 +1,7 @@
 package main
 
 /*
-#include "mta_hal.h"
+#include <ccsp/mta_hal.h>
 */
 import "C"
 
