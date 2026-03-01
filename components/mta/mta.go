@@ -41,11 +41,6 @@ func Run() error {
 		}
 	}
 
-	if runAsDaemon {
-		// Daemonize the process
-		// TODO: Implement in commmon package
-	}
-
 	if syscall.Getuid() == 0 {
 		// Drop privileges to "non-root" user
 		err = syscall.Setgid(950)
@@ -57,6 +52,17 @@ func Run() error {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if runAsDaemon {
+		// Daemonize the process
+		// TODO: Implement in commmon package, or maybe not at all since systemd is the default init system now
+	}
+
+	// Write PID to file
+	err = os.WriteFile("/var/run/CcspMtaAgentSsp.pid", []byte(fmt.Sprintf("%d", os.Getpid())), 0o644)
+	if err != nil {
+		panic(err)
 	}
 
 	fmt.Printf("Running MTA Agent: user_id=%d group_id=%d \n", syscall.Getuid(), syscall.Getgid())
