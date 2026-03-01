@@ -1,6 +1,7 @@
 package main
 
 /*
+#cgo LDFLAGS: -lhal_mta
 #include <ccsp/mta_hal.h>
 */
 import "C"
