@@ -2,6 +2,7 @@ package common
 
 /*
 #cgo LDFLAGS: -lsyscfg
+#include <stdlib.h>
 #include <syscfg/syscfg.h>
 */
 import "C"
