@@ -33,5 +33,4 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(mtaCmd)
-	mtaCmd.Flags().StringP("subsys", "", "", "Run as a subsystem")
 }

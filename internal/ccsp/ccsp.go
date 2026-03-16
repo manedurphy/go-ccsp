@@ -1,11 +1,11 @@
 package ccsp
 
 type CcspComponentCfg struct {
-	ComponentId      string
-	ComponentName    string
-	Version          uint32
-	DbusPath         string
-	DmXmlCfgFileName string
+	ComponentID      string `xml:"ID"`
+	ComponentName    string `xml:"Name"`
+	Version          uint32 `xml:"Version"`
+	DbusPath         string `xml:"DbusPath"`
+	DmXMLCfgFileName string `xml:"DataModelXmlCfg"`
 }
 
 type CCSPComponent struct {

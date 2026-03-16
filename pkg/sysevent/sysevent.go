@@ -22,7 +22,10 @@ const (
 type Sysevent struct {
 	syseventFD    C.int
 	syseventToken C.token_t
+	asyncIDs      map[*AsyncID]C.async_id_t
 }
+
+type AsyncID struct{}
 
 func New() *Sysevent {
 	return &Sysevent{}
@@ -56,5 +59,22 @@ func (s *Sysevent) SetOptions(name string, flags uint) error {
 	if ret != 0 {
 		return fmt.Errorf("sysevent_set_options failed with code %d", ret)
 	}
+	return nil
+}
+
+// int sysevent_setnotification(const int fd, const token_t token, char *subject, async_id_t *async_id);
+func (s *Sysevent) SetNotification(subject string, asyncID *AsyncID) error {
+	a, ok := s.asyncIDs[asyncID]
+	if !ok {
+		var asyncID_C C.async_id_t
+		s.asyncIDs[asyncID] = asyncID_C
+		a = asyncID_C
+	}
+
+	ret := C.sysevent_setnotification(s.syseventFD, s.syseventToken, C.CString(subject), &a)
+	if ret != 0 {
+		return fmt.Errorf("sysevent_setnotification failed with code %d", ret)
+	}
+
 	return nil
 }

@@ -22,7 +22,6 @@ func SyscfgGet(key string) (string, error) {
 	if ret != 0 {
 		return "", fmt.Errorf("syscfg_get failed with code %d", ret)
 	}
-	defer C.free(unsafe.Pointer(cBufPtr))
 
 	return C.GoString(cBufPtr), nil
 }

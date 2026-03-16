@@ -212,18 +212,19 @@ type MTAAgentConfig struct {
 	ccsp.CcspComponentCfg
 	EthernetWANEnabled   bool // -DENABLE_ETH_WAN
 	ErouterDHCPOptionMTA bool // -DEROUTER_DHCP_OPTION_MTA
+	DMLConfigPath        string
 }
 
 type MTAAgent struct {
 	DataModel DataModel
-	cfg       MTAAgentConfig
+	cfg       *MTAAgentConfig
 	sysevent  *sysevent.Sysevent
 }
 
-func New() *MTAAgent {
+func New(cfg *MTAAgentConfig) *MTAAgent {
 	return &MTAAgent{
 		DataModel: DataModel{},
-		cfg:       MTAAgentConfig{},
+		cfg:       cfg,
 		sysevent:  sysevent.New(),
 	}
 }
@@ -295,10 +296,10 @@ func (d *DataModel) Initialize() error {
 }
 
 const (
-	loggerModuleName      string = "LOG.RDK.MTA"
-	configFilePath        string = "/usr/ccsp/mta/CcspMta.cfg"
-	pidFilePath           string = "/var/run/CcspMtaAgentSsp.pid"
-	dmlJSONConfigFilePath string = "/usr/ccsp/mta/mta_json_dml.json"
+	loggerModuleName string = "LOG.RDK.MTA"
+	configFilePath   string = "/usr/ccsp/mta/CcspMta.cfg"
+	// pidFilePath           string = "/var/run/CcspMtaAgentSsp.pid"
+	pidFilePath string = "/var/tmp/go-ccsp.pid" // TODO: Revert to original path after testing
 )
 
 func (m *MTAAgent) Run(subSystem string) error {
@@ -322,20 +323,20 @@ func (m *MTAAgent) Run(subSystem string) error {
 
 	rdklogger.RDKLog(rdklogger.RDK_LOG_INFO, loggerModuleName, fmt.Sprintf("Starting MTA Agent: component_name=%s subsystem=%s\n", m.cfg.ComponentName, subSystem))
 
-	if syscall.Getuid() == 0 {
-		// Drop privileges to "non-root" user
-		err = syscall.Setgid(950)
-		if err != nil {
-			rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set GID: err=%s\n", err))
-			os.Exit(1)
-		}
-
-		err = syscall.Setuid(950)
-		if err != nil {
-			rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set UID: err=%s\n", err))
-			os.Exit(1)
-		}
-	}
+	// if syscall.Getuid() == 0 {
+	// 	// Drop privileges to "non-root" user
+	// 	err = syscall.Setgid(950)
+	// 	if err != nil {
+	// 		rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set GID: err=%s\n", err))
+	// 		os.Exit(1)
+	// 	}
+	//
+	// 	err = syscall.Setuid(950)
+	// 	if err != nil {
+	// 		rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set UID: err=%s\n", err))
+	// 		os.Exit(1)
+	// 	}
+	// }
 
 	// Write PID to file
 	err = os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d", os.Getpid())), 0o644)
@@ -371,14 +372,18 @@ func (m *MTAAgent) Run(subSystem string) error {
 		return fmt.Errorf("failed to open sysevent connection: err=%s", err)
 	}
 
-	go func() {
+	if m.cfg.EthernetWANEnabled {
 		if m.cfg.ErouterDHCPOptionMTA {
 			// Mta_Sysevent_thread_Dhcp_Option
-			m.sysevent.SetOptions("current_wan_state", sysevent.TupleFlagEvent)
+			err := m.sysevent.SetOptions("current_wan_state", sysevent.TupleFlagEvent)
+			if err != nil {
+				rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set sysevent options: err=%s\n", err))
+				os.Exit(1)
+			}
 		} else {
 			// Mta_Sysevent_thread
 		}
-	}()
+	}
 
 	// TODO: Conditional logic for defined(VOICE_MTA_SUPPORT)
 
@@ -390,7 +395,7 @@ func (m *MTAAgent) Run(subSystem string) error {
 		})
 	}
 
-	mtaDMLConfigBytes, err := os.ReadFile(dmlJSONConfigFilePath)
+	mtaDMLConfigBytes, err := os.ReadFile(m.cfg.DMLConfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to read MTA DML config file: err=%s", err)
 	}
@@ -410,11 +415,16 @@ func (m *MTAAgent) Run(subSystem string) error {
 
 		switch v := val.(type) {
 		case map[string]any:
-			for k, subVal := range v {
-				if subVal == "List_Of_Def" {
-					// TODO: Register all parameters with RBUS
-				} else {
-					processMap(v, k)
+			for k := range v {
+				processMap(v, k)
+			}
+		case []any:
+			// TODO: Register all parameters with RBUS
+			for _, item := range v {
+				if itemMap, ok := item.(map[string]any); ok {
+					for k := range itemMap {
+						fmt.Printf("Registering parameter with RBUS: %s\n", k)
+					}
 				}
 			}
 		default:
