@@ -250,21 +250,21 @@ func (m *MTAAgent) InitializeDataModel() error {
 		return fmt.Errorf("failed to read MTA DML config file: err=%s", err)
 	}
 
-	var mtaDMLConfig map[string]interface{}
+	var mtaDMLConfig map[string]any
 	err = json.Unmarshal(mtaDMLConfigBytes, &mtaDMLConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse MTA DML config file: err=%s", err)
 	}
 
-	var processMap func(m map[string]interface{}, key string)
-	processMap = func(m map[string]interface{}, key string) {
+	var processMap func(m map[string]any, key string)
+	processMap = func(m map[string]any, key string) {
 		val, ok := m[key]
 		if !ok {
 			return
 		}
 
 		switch v := val.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			for k, subVal := range v {
 				if subVal == "List_Of_Def" {
 					// TODO: Register all parameters with RBUS
@@ -395,21 +395,21 @@ func (m *MTAAgent) Run(subSystem string) error {
 		return fmt.Errorf("failed to read MTA DML config file: err=%s", err)
 	}
 
-	var mtaDMLConfig map[string]interface{}
+	var mtaDMLConfig map[string]any
 	err = json.Unmarshal(mtaDMLConfigBytes, &mtaDMLConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse MTA DML config file: err=%s", err)
 	}
 
-	var processMap func(m map[string]interface{}, key string)
-	processMap = func(m map[string]interface{}, key string) {
+	var processMap func(m map[string]any, key string)
+	processMap = func(m map[string]any, key string) {
 		val, ok := m[key]
 		if !ok {
 			return
 		}
 
 		switch v := val.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			for k, subVal := range v {
 				if subVal == "List_Of_Def" {
 					// TODO: Register all parameters with RBUS
