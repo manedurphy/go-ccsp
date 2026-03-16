@@ -14,8 +14,12 @@ static int is_rdk_logger_enabled() {
 #endif
 }
 
-int init_rdk_logger(void) {
+static int init_rdk_logger(void) {
     return RDK_LOGGER_INIT();
+}
+
+static void log_message(rdk_LogLevel level, const char *module, const char *message) {
+    rdk_logger_msg_printf(level, module, "%s", message);
 }
 */
 import "C"
@@ -49,7 +53,6 @@ func InitializeRDKLogger() error {
 	return nil
 }
 
-// RDK_LOG(RDK_LOG_INFO, "LOG.RDK.MYAPP", "Application started\n");
 func RDKLog(level RDKLogLevel, module string, message string) {
 	cModule := C.CString(module)
 	defer C.free(unsafe.Pointer(cModule))
@@ -57,5 +60,5 @@ func RDKLog(level RDKLogLevel, module string, message string) {
 	cMessage := C.CString(message)
 	defer C.free(unsafe.Pointer(cMessage))
 
-	C.rdk_logger_msg_printf(C.rdk_LogLevel(level), cModule, cMessage)
+	C.log_message(C.rdk_LogLevel(level), cModule, cMessage)
 }

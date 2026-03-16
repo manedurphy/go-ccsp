@@ -10,7 +10,8 @@ var mtaCmd = &cobra.Command{
 	Short: "Run the MTA subsystem",
 	Long:  `Run the MTA subsystem of the application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := mta.Run("eRT")
+		mtaAgent := mta.New()
+		err := mtaAgent.Run("eRT")
 		if err != nil {
 			panic(err)
 		}
