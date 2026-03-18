@@ -28,7 +28,9 @@ type Sysevent struct {
 type AsyncID struct{}
 
 func New() *Sysevent {
-	return &Sysevent{}
+	return &Sysevent{
+		asyncIDs: make(map[*AsyncID]C.async_id_t),
+	}
 }
 
 // Open estableshes a connection to the sysevent daemon
