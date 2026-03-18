@@ -16,6 +16,7 @@ var mtaCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		mtaAgent := mta.New(&mta.MTAAgentConfig{
 			DMLConfigPath:        cmd.Flag("dml-config").Value.String(),
+			EthernetWANEnabled:   true,
 			ErouterDHCPOptionMTA: true,
 		})
 		err := mtaAgent.Run("eRT")
