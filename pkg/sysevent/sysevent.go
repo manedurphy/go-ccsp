@@ -75,6 +75,7 @@ func (s *Sysevent) SetNotification(subject string, asyncID *AsyncID) error {
 	if ret != 0 {
 		return fmt.Errorf("sysevent_setnotification failed with code %d", ret)
 	}
+	fmt.Printf("Set notification for subject '%s' with return value %d\n", subject, ret)
 
 	return nil
 }

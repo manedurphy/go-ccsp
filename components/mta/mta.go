@@ -380,7 +380,7 @@ func (m *MTAAgent) Run(subSystem string) error {
 				os.Exit(1)
 			}
 
-			// Goroutine for monitoring the WAN mode and WAN status
+			// Monitor the WAN mode and WAN status
 			go func() {
 				var wanStateAsyncID sysevent.AsyncID
 				err := m.sysevent.SetNotification("current_wan_state", &wanStateAsyncID)
