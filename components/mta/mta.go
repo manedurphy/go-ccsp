@@ -365,14 +365,13 @@ func (m *MTAAgent) Run(subSystem string) error {
 		return fmt.Errorf("mta_hal_InitDB failed with code %d", ret)
 	}
 
-	// Goroutine for monitoring the WAN mode and WAN status
-	err = m.sysevent.Open("127.0.0.1", sysevent.SeServerWellKnownPort, sysevent.SeVersion, "WAN State")
-	if err != nil {
-		rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to open sysevent connection: err=%s\n", err))
-		return fmt.Errorf("failed to open sysevent connection: err=%s", err)
-	}
-
 	if m.cfg.EthernetWANEnabled {
+		err := m.sysevent.Open("127.0.0.1", sysevent.SeServerWellKnownPort, sysevent.SeVersion, "WAN State")
+		if err != nil {
+			rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to open sysevent connection: err=%s\n", err))
+			return fmt.Errorf("failed to open sysevent connection: err=%s", err)
+		}
+
 		if m.cfg.ErouterDHCPOptionMTA {
 			// Mta_Sysevent_thread_Dhcp_Option
 			err := m.sysevent.SetOptions("current_wan_state", sysevent.TupleFlagEvent)
@@ -380,6 +379,16 @@ func (m *MTAAgent) Run(subSystem string) error {
 				rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set sysevent options: err=%s\n", err))
 				os.Exit(1)
 			}
+
+			// Goroutine for monitoring the WAN mode and WAN status
+			go func() {
+				var wanStateAsyncID sysevent.AsyncID
+				err := m.sysevent.SetNotification("current_wan_state", &wanStateAsyncID)
+				if err != nil {
+					rdklogger.RDKLog(rdklogger.RDK_LOG_ERROR, loggerModuleName, fmt.Sprintf("Failed to set sysevent options: err=%s\n", err))
+					os.Exit(1)
+				}
+			}()
 		} else {
 			// Mta_Sysevent_thread
 		}
